@@ -1,17 +1,15 @@
-import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { format } from "date-fns";
 import { useNotes, ACTION } from "../../context/NoteContext";
-import { useLabels } from "../../context/LabelContext";
+import NoteCard from "../../material-ui/NoteCard";
+import { format } from "date-fns";
+import { useEffect, useState } from "react";
 
-export default function NoteItem({ note }) {
-    const [isShown, setIsShown] = useState(false);
+export default function NoteItem({ note, isShownFilter, isShownSearch }) {
     const [, dispatch] = useNotes();
-    const [labels] = useLabels();
     const [checkedLabels, setCheckedLabels] = useState(note.labels);
     const [title, setTitle] = useState(note.title);
     const [body, setBody] = useState(note.body);
-    const navigate = useNavigate();
+    const labels = JSON.parse(localStorage.getItem("labels")) || [];
+    const labelsLength = labels ? labels.length : 0;
 
     useEffect(() => {
         dispatch({
@@ -23,13 +21,7 @@ export default function NoteItem({ note }) {
         });
 
         setCheckedLabels((prevLabels) =>
-            prevLabels.length < labels.length
-                ? [...prevLabels, labels[labels.length - 1]]
-                : prevLabels
-        );
-
-        setCheckedLabels((prevLabels) =>
-            prevLabels.length > labels.length
+            prevLabels.length > labelsLength
                 ? prevLabels.filter((prevLabel) =>
                       labels.map(({ id }) => id).includes(prevLabel.id)
                   )
@@ -37,12 +29,17 @@ export default function NoteItem({ note }) {
         );
 
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [checkedLabels]);
+    }, [labels]);
 
     useEffect(() => {
         handleEdit();
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [title, body]);
+
+    useEffect(() => {
+        handleEditLabels();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [checkedLabels]);
 
     function handleEdit() {
         dispatch({
@@ -59,90 +56,40 @@ export default function NoteItem({ note }) {
         });
     }
 
+    function handleEditTitle(value) {
+        setTitle(value);
+        handleEdit();
+    }
+
+    function handleEditBody(value) {
+        setBody(value);
+        handleEdit();
+    }
+
+    function handleEditLabels() {
+        dispatch({
+            type: ACTION.EDIT,
+            note: {
+                ...note,
+                labels: checkedLabels,
+            },
+        });
+    }
+
     function handleDelete() {
         dispatch({ type: ACTION.DELETE, id: note.id });
-
-        setTimeout(() => {
-            navigate("/n");
-            setTimeout(() => {
-                navigate("/");
-            }, 7);
-        }, 5);
     }
 
     return (
-        <div>
-            <input
-                type="text"
-                value={title}
-                onChange={(e) => {
-                    setTitle(e.target.value);
-                    handleEdit();
-                }}
-            />
-            <br />
-            <textarea
-                cols="30"
-                rows="10"
-                value={body}
-                onChange={(e) => {
-                    setBody(e.target.value);
-                    handleEdit();
-                }}
-            />
-            <br />
-            <br />
-            {checkedLabels.map(
-                ({ id, name, isSelected }) =>
-                    isSelected && (
-                        <span
-                            key={id}
-                            style={{
-                                padding: "3px 5px",
-                                marginRight: "10px",
-                                border: "1px solid black",
-                            }}
-                        >
-                            {name}
-                        </span>
-                    )
-            )}
-            <br />
-            <br />
-            <button onClick={() => setIsShown((prevState) => !prevState)}>
-                Change Labels
-            </button>
-            <br />
-            {isShown &&
-                checkedLabels.map(({ id, name, isSelected }) => {
-                    return (
-                        <div key={id}>
-                            <input
-                                type="checkbox"
-                                name="label"
-                                id={id}
-                                checked={isSelected}
-                                onChange={() =>
-                                    setCheckedLabels((prevLabels) =>
-                                        prevLabels.map((prevLabel) =>
-                                            prevLabel.id === id
-                                                ? {
-                                                      ...prevLabel,
-                                                      isSelected:
-                                                          !prevLabel.isSelected,
-                                                  }
-                                                : prevLabel
-                                        )
-                                    )
-                                }
-                            />
-                            {name}
-                        </div>
-                    );
-                })}
-            <p>Last edited: {note.modifiedDate}</p>
-            <p>Created: {note.createdDate}</p>
-            <button onClick={handleDelete}>Delete</button>
-        </div>
+        <NoteCard
+            note={note}
+            handleEditTitle={handleEditTitle}
+            handleEditBody={handleEditBody}
+            setEditCheckedLabels={setCheckedLabels}
+            handleEditLabels={handleEditLabels}
+            handleDelete={handleDelete}
+            isShownFilter={isShownFilter}
+            isShownSearch={isShownSearch}
+        />
     );
 }

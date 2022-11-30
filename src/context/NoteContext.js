@@ -1,5 +1,4 @@
-import { createContext, useContext, useReducer, useState } from "react";
-import localforage from "localforage";
+import { createContext, useContext, useReducer } from "react";
 
 const notesContext = createContext(null);
 const notesDispatchContext = createContext(null);
@@ -17,7 +16,6 @@ export const ACTION = {
 };
 
 function saveItems(newNotes) {
-    localforage.setItem("notes", newNotes);
     localStorage.setItem("notes", JSON.stringify(newNotes));
 }
 
@@ -57,15 +55,7 @@ function notesReducer(notes, action) {
 }
 
 function useInitialNotes() {
-    const localStorageNotes = JSON.parse(localStorage.getItem("notes")) || [];
-    const localforageNotes = localforage.getItem("notes") || [];
-    const [initialNotes, setInitialNotes] = useState(localStorageNotes);
-
-    localforageNotes.then((data) => {
-        setInitialNotes(data);
-    });
-
-    return initialNotes;
+    return JSON.parse(localStorage.getItem("notes")) || [];
 }
 
 export default function NotesProvider({ children }) {

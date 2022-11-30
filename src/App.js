@@ -9,9 +9,7 @@ export default function App() {
         <Routes>
             <Route path="/" element={<Layout />}>
                 <Route index element={<Notes />} />
-                <Route path="n">
-                    <Route index element={<Notes />} />
-                </Route>
+                <Route path="notes" element={<Notes />} />
                 <Route path="create" element={<CreateNote />} />
                 <Route path="*" element={<NotFound />} />
             </Route>

@@ -1,5 +1,4 @@
-import { createContext, useContext, useReducer, useState } from "react";
-import localforage from "localforage";
+import { createContext, useContext, useReducer } from "react";
 
 const labelsContext = createContext(null);
 const labelsDispatchContext = createContext(null);
@@ -16,7 +15,6 @@ export const ACTION = {
 };
 
 function saveItems(newLabels) {
-    localforage.setItem("labels", newLabels);
     localStorage.setItem("labels", JSON.stringify(newLabels));
 }
 
@@ -46,15 +44,7 @@ function labelsReducer(labels, action) {
 }
 
 function useInitialLabels() {
-    const localStorageLabels = JSON.parse(localStorage.getItem("labels")) || [];
-    const localforageLabels = localforage.getItem("labels") || [];
-    const [initialLabels, setInitialLabels] = useState(localStorageLabels);
-
-    localforageLabels.then((data) => {
-        setInitialLabels(data);
-    });
-
-    return initialLabels;
+    return JSON.parse(localStorage.getItem("labels")) || [];
 }
 
 export default function LabelsProvider({ children }) {

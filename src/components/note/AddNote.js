@@ -1,9 +1,17 @@
-import { useState } from "react";
+import Typography from "@mui/material/Typography";
+import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
+import NoteAddTwoToneIcon from "@mui/icons-material/NoteAddTwoTone";
+import TitleTextField from "../../material-ui/TitleTextField";
+import DescriptionTextField from "../../material-ui/DescriptionTextField";
+import { useBreakpointsDown } from "../../material-ui/custom_hooks/useBreakpoints";
+import { useNotes, ACTION } from "../../context/NoteContext";
+import { useLabels } from "../../context/LabelContext";
+import SelectLabels from "../../material-ui/SelectLabels";
 import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import { v4 as uuid } from "uuid";
-import { useNotes, ACTION } from "../../context/NoteContext";
-import { useLabels } from "../../context/LabelContext";
+import { useEffect, useState } from "react";
 
 export default function AddNote() {
     const [title, setTitle] = useState("");
@@ -12,10 +20,13 @@ export default function AddNote() {
     const [labels] = useLabels();
     const [checkedLabels, setCheckedLabels] = useState(labels);
     const navigate = useNavigate();
+    const matches = useBreakpointsDown();
 
-    function handleSubmit(e) {
-        e.preventDefault();
+    useEffect(() => {
+        setCheckedLabels(labels);
+    }, [labels]);
 
+    function handleClick() {
         if (title !== "" || body !== "") {
             dispatch({
                 type: ACTION.ADD,
@@ -26,78 +37,66 @@ export default function AddNote() {
                 createdDate: format(new Date(), "h:mm a, d MMM y"),
                 modifiedDate: format(new Date(), "h:mm a, d MMM y"),
             });
+
+            setTimeout(() => {
+                navigate("/notes");
+                setTitle("");
+                setBody("");
+            }, 7);
         }
-
-        setCheckedLabels((prevLabels) =>
-            prevLabels.map((label) => ({ ...label, isSelected: false }))
-        );
-
-        setTimeout(() => {
-            navigate("/");
-            setTitle("");
-            setBody("");
-        }, 7);
     }
 
     return (
-        <form onSubmit={handleSubmit} style={{ marginBottom: 20 }}>
-            <input
-                type="text"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-            />
-            <br />
-            <br />
-            <textarea
-                cols="30"
-                rows="10"
-                value={body}
-                onChange={(e) => setBody(e.target.value)}
-            />
-            <br />
-            <br />
-            {checkedLabels.map(
-                (label) =>
-                    label.isSelected && (
-                        <span
-                            key={label.id}
-                            style={{
-                                padding: "3px 5px",
-                                marginRight: "10px",
-                                border: "1px solid black",
-                            }}
-                        >
-                            {label.name}
-                        </span>
-                    )
-            )}
-            <br />
-            <br />
-            {checkedLabels.map((label) => (
-                <label key={label.id} htmlFor={label.id}>
-                    <input
-                        type="checkbox"
-                        name="label"
-                        id={label.id}
-                        onChange={() => {
-                            setCheckedLabels((prevLabels) =>
-                                prevLabels.map((lbl) =>
-                                    lbl.id === label.id
-                                        ? {
-                                              ...lbl,
-                                              isSelected: !lbl.isSelected,
-                                          }
-                                        : lbl
-                                )
-                            );
-                        }}
-                    />
-                    {label.name}
-                </label>
-            ))}
-            <br />
-            <br />
-            <button>Add</button>
-        </form>
+        <Box pl={0.5} pb={2}>
+            <Typography
+                fontSize="title"
+                fontWeight="medium"
+                component="h2"
+                color="secondary"
+                mb={2}
+            >
+                Create A Note
+            </Typography>
+            <Box
+                component="form"
+                display="flex"
+                flexDirection="column"
+                rowGap={2}
+            >
+                <TitleTextField
+                    outlined={true}
+                    title={title}
+                    setTitle={setTitle}
+                />
+                <DescriptionTextField
+                    outlined={true}
+                    body={body}
+                    setBody={setBody}
+                />
+                <SelectLabels
+                    outlined={true}
+                    action="addNote"
+                    setCheckedLabels={setCheckedLabels}
+                />
+                <Button
+                    variant="contained"
+                    color="primary"
+                    startIcon={<NoteAddTwoToneIcon />}
+                    sx={{
+                        width: matches ? 120 : 140,
+                        "&:hover": {
+                            bgcolor: "primary.main",
+                        },
+                    }}
+                    disableRipple
+                    disableElevation
+                    onClick={handleClick}
+                >
+                    <Typography fontSize="text" fontWeight="medium">
+                        Create
+                    </Typography>
+                </Button>
+            </Box>
+        </Box>
     );
 }
